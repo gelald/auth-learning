@@ -1,0 +1,7 @@
+# Keycloak 临时文件
+*.tmp
+*.log
+
+# 自动生成的 secret 文件（如果创建）
+*.secret
+secrets/

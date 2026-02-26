@@ -1,0 +1,114 @@
+version: '3.8'
+
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:22.0.5
+    container_name: keycloak-demo
+    environment:
+      # Keycloak 管理员账号
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+
+      # 数据库配置（使用内嵌 H2，生产环境建议用 PostgreSQL）
+      # KC_DB: postgres
+      # KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      # KC_DB_USERNAME: keycloak
+      # KC_DB_PASSWORD: keycloak
+
+      # 启动参数
+      KC_HTTP_ENABLED: true
+      KC_HOSTNAME_STRICT: false
+      KC_PROXY: edge
+
+      # 健康检查相关
+      KC_HEALTH_ENABLED: true
+      KC_METRICS_ENABLED: true
+    ports:
+      - "8080:8080"
+
+    volumes:
+      # 挂载 realm 配置文件
+      - ./realm-config:/opt/keycloak/data/import:ro
+      
+      # 持久化数据（可选）
+      # - keycloak-data:/opt/keycloak/data
+
+    command:
+      - start-dev
+      - --import-realm
+      # 如果需要从文件系统导入 realm，取消下面注释
+      # - --spi-theme-static-max-age=-1
+      # - --spi-theme-cache-themes=false
+      # - --spi-theme-cache-templates=false
+
+    networks:
+      - keycloak-network
+
+    # healthcheck:
+    #   test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8080;echo -e \"GET /health/ready HTTP/1.1\r\nhost: http://localhost\r\nConnection: close\r\n\r\n\" >&3;grep \"HTTP/1.1 200 OK\" <&3"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 5
+    #   start_period: 30s
+
+  # PostgreSQL 数据库（可选，生产环境推荐）
+  # postgres:
+  #   image: postgres:15
+  #   container_name: keycloak-postgres
+  #   environment:
+  #     POSTGRES_DB: keycloak
+  #     POSTGRES_USER: keycloak
+  #     POSTGRES_PASSWORD: keycloak
+  #   volumes:
+  #     - postgres-data:/var/lib/postgresql/data
+  #   networks:
+  #     - keycloak-network
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U keycloak"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+
+  # 1Panel生成
+  # postgresql:
+  #   container_name: ${CONTAINER_NAME}
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         cpus: ${CPUS}
+  #         memory: ${MEMORY_LIMIT}
+  #   environment:
+  #     - POSTGRES_USER=${PANEL_DB_ROOT_USER}
+  #     - POSTGRES_PASSWORD=${PANEL_DB_ROOT_PASSWORD}
+  #   healthcheck:
+  #     interval: 30s
+  #     retries: 5
+  #     start_period: 20s
+  #     test:
+  #       - CMD
+  #       - pg_isready
+  #       - -h
+  #       - 127.0.0.1
+  #       - -p
+  #       - "5432"
+  #       - -q
+  #       - -U
+  #       - ${PANEL_DB_ROOT_USER}
+  #     timeout: 5s
+  #   image: postgres:17.8-alpine
+  #   labels:
+  #     createdBy: Apps
+  #   networks:
+  #     - 1panel-network
+  #   ports:
+  #     - ${HOST_IP}:${PANEL_APP_PORT_HTTP}:5432
+  #   volumes:
+  #     - ./data:/var/lib/postgresql/data
+
+volumes:
+  # keycloak-data:
+  # postgres-data:
+
+networks:
+  keycloak-network:
+    driver: bridge

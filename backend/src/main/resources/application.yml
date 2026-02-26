@@ -1,0 +1,47 @@
+server:
+  port: 21301
+
+spring:
+  application:
+    name: demo-backend
+
+  datasource:
+    url: jdbc:h2:mem:demo
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: password
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+keycloak:
+  server-url: http://localhost:8080
+  realm: demo-realm
+  client-id: demo-backend
+  client-secret: YOUR_BACKEND_CLIENT_SECRET
+
+logging:
+  level:
+    com.example.demo: DEBUG
+    org.springframework.security: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+    env:
+      enabled: true
